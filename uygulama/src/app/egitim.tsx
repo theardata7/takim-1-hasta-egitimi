@@ -12,19 +12,19 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const egitimler = [
   {
-    id: 1,
+    id: "el-hijyeni",
     baslik: "El Hijyeni",
     aciklama: "Doğru el yıkama alışkanlıkları.",
     ikon: "🧼",
   },
   {
-    id: 2,
+    id: "saglikli-beslenme",
     baslik: "Sağlıklı Beslenme",
     aciklama: "Dengeli beslenmenin temel ilkeleri.",
     ikon: "🥗",
   },
   {
-    id: 3,
+    id: "fiziksel-aktivite",
     baslik: "Fiziksel Aktivite",
     aciklama: "Günlük hareketin sağlık açısından önemi.",
     ikon: "🏃",
@@ -40,23 +40,33 @@ export default function EgitimEkrani() {
         </Pressable>
 
         <Text style={styles.title}>Hasta Eğitimi</Text>
-
         <Text style={styles.subtitle}>
           Sağlık hakkında temel bilgilendirme kartları.
         </Text>
 
         {egitimler.map((egitim) => (
-          <View key={egitim.id} style={styles.card}>
+          <Pressable
+            key={egitim.id}
+            style={({ pressed }) => [
+              styles.card,
+              pressed && styles.cardPressed,
+            ]}
+            onPress={() =>
+              router.push({
+                pathname: "/egitim-detay",
+                params: { id: egitim.id },
+              })
+            }
+          >
             <Text style={styles.icon}>{egitim.ikon}</Text>
-
-            <Text style={styles.cardTitle}>
-              {egitim.baslik}
-            </Text>
-
+            <Text style={styles.cardTitle}>{egitim.baslik}</Text>
             <Text style={styles.cardDescription}>
               {egitim.aciklama}
             </Text>
-          </View>
+            <Text style={styles.detailLink}>
+              Detayları Gör →
+            </Text>
+          </Pressable>
         ))}
 
         <View style={styles.notice}>
@@ -103,6 +113,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E5ECF4",
   },
+  cardPressed: {
+    opacity: 0.7,
+  },
   icon: {
     fontSize: 34,
     marginBottom: 12,
@@ -117,6 +130,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#65758B",
     lineHeight: 22,
+  },
+  detailLink: {
+    color: "#147D83",
+    fontSize: 14,
+    fontWeight: "700",
+    marginTop: 14,
   },
   notice: {
     marginTop: 18,

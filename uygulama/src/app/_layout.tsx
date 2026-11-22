@@ -12,8 +12,10 @@ export default function RootLayout() {
     >
       <Stack.Screen name="index" />
       <Stack.Screen name="egitim" />
+      <Stack.Screen name="egitim-detay" />
       <Stack.Screen name="ilaclarim" />
       <Stack.Screen name="sor" />
     </Stack>
   );
 }
+
