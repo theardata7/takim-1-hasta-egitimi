@@ -86,7 +86,28 @@ export default function EgitimDetayEkrani() {
             </View>
           </>
         )}
-
+{id === "saglikli-beslenme" && (
+  <Pressable
+    onPress={() => router.push("/kalori")}
+    style={{
+      backgroundColor: "#087E80",
+      padding: 20,
+      borderRadius: 18,
+      marginTop: 20,
+      alignItems: "center",
+    }}
+  >
+    <Text
+      style={{
+        color: "#FFFFFF",
+        fontSize: 16,
+        fontWeight: "800",
+      }}
+    >
+      🔥 Kalori ve Makro Hesapla →
+    </Text>
+  </Pressable>
+)}
         <View style={styles.notice}>
           <Text style={styles.noticeText}>
             Bu uygulama tanı veya tedavi önermez.
