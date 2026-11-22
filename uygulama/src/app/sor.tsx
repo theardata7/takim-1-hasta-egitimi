@@ -1,131 +1,615 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
   TextInput,
   Pressable,
-  StyleSheet,
-  Alert,
+  ScrollView,
   KeyboardAvoidingView,
   Platform,
+  StyleSheet,
+  ActivityIndicator,
 } from "react-native";
-import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
 
-export default function SoruEkrani() {
-  const [soru, setSoru] = useState("");
+type Mesaj = {
+  id: string;
+  rol: "kullanici" | "asistan";
+  metin: string;
+  saat: string;
+};
 
-  function soruGonder() {
-    if (!soru.trim()) {
-      Alert.alert("Uyarı", "Lütfen bir soru yazın.");
-      return;
+const API_ADRESI = "http://192.168.1.115:3002/api/sor";
+
+const ONERILER = [
+  {
+    emoji: "❤️",
+    baslik: "Kalp Sağlığı",
+    soru: "Kalp sağlığını korumak için neler yapılabilir?",
+  },
+  {
+    emoji: "💊",
+    baslik: "İlaç Bilgisi",
+    soru: "İlaç kullanırken genel olarak nelere dikkat edilmeli?",
+  },
+  {
+    emoji: "🥗",
+    baslik: "Beslenme",
+    soru: "Dengeli beslenmenin temel ilkeleri nelerdir?",
+  },
+  {
+    emoji: "😴",
+    baslik: "Uyku Düzeni",
+    soru: "Daha kaliteli uyumak için neler yapılabilir?",
+  },
+];
+
+function saatAl() {
+  return new Date().toLocaleTimeString("tr-TR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+const ilkMesaj: Mesaj = {
+  id: "hosgeldin",
+  rol: "asistan",
+  metin:
+    "Merhaba! 👋 Ben sağlık bilgi asistanınım.\n\n" +
+    "Sağlık konularındaki genel sorularını yanıtlamak ve " +
+    "sağlık bilgilerini daha iyi anlamana yardımcı olmak için buradayım.\n\n" +
+    "Bugün ne hakkında bilgi almak istersin?",
+  saat: saatAl(),
+};
+
+export default function SorEkrani() {
+  const [mesajlar, setMesajlar] = useState<Mesaj[]>([
+    ilkMesaj,
+  ]);
+  const [girdi, setGirdi] = useState("");
+  const [yukleniyor, setYukleniyor] = useState(false);
+
+  const scrollRef = useRef<React.ElementRef<typeof ScrollView>>(null);
+
+  useEffect(() => {
+    scrollRef.current?.scrollToEnd({
+      animated: true,
+    });
+  }, [mesajlar, yukleniyor]);
+
+  async function mesajGonder(hazirSoru?: string) {
+    const metin = (hazirSoru ?? girdi).trim();
+
+    if (!metin || yukleniyor) return;
+
+    const yeniMesaj: Mesaj = {
+      id: `${Date.now()}-k`,
+      rol: "kullanici",
+      metin,
+      saat: saatAl(),
+    };
+
+    // Ilk karsilama mesajini gecmise dahil etmiyoruz.
+    const gecmis = mesajlar
+      .filter((mesaj) => mesaj.id !== "hosgeldin")
+      .map((mesaj) => ({
+        rol: mesaj.rol,
+        metin: mesaj.metin,
+      }));
+
+    setMesajlar((onceki) => [...onceki, yeniMesaj]);
+    setGirdi("");
+    setYukleniyor(true);
+
+    try {
+      const yanit = await fetch(API_ADRESI, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          mesaj: metin,
+          gecmis,
+        }),
+      });
+
+      const veri = await yanit.json();
+
+      if (!yanit.ok || !veri.basarili) {
+        throw new Error(
+          veri.hata || "Yapay zeka yaniti alinamadi."
+        );
+      }
+
+      if (
+        typeof veri.cevap !== "string" ||
+        !veri.cevap.trim()
+      ) {
+        throw new Error("Yapay zeka bos cevap verdi.");
+      }
+
+      const cevap: Mesaj = {
+        id: `${Date.now()}-a`,
+        rol: "asistan",
+        metin: veri.cevap.trim(),
+        saat: saatAl(),
+      };
+
+      setMesajlar((onceki) => [...onceki, cevap]);
+    } catch (hata) {
+      console.error("Sor ekrani API hatasi:", hata);
+
+      const hataMetni =
+        hata instanceof Error
+          ? hata.message
+          : "Bilinmeyen bir hata olustu.";
+
+      const hataMesaji: Mesaj = {
+        id: `${Date.now()}-h`,
+        rol: "asistan",
+        metin:
+          "Şu anda yanıt oluşturamadım. 💙\n\n" +
+          hataMetni +
+          "\n\nLütfen biraz sonra tekrar dene.",
+        saat: saatAl(),
+      };
+
+      setMesajlar((onceki) => [...onceki, hataMesaji]);
+    } finally {
+      setYukleniyor(false);
     }
-
-    Alert.alert(
-      "Bilgilendirme",
-      "Yapay zekâ bağlantısı henüz kurulmadı. Bu ekran şu anda taslak olarak çalışıyor."
-    );
   }
 
+  const sohbetBasladi = mesajlar.length > 1;
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView
-        style={styles.content}
+        style={styles.ana}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <Pressable onPress={() => router.back()}>
-          <Text style={styles.back}>← Geri</Text>
-        </Pressable>
+        <View style={styles.header}>
+          <Pressable
+            onPress={() => router.back()}
+            style={styles.geriButon}
+          >
+            <Text style={styles.geriYazi}>‹</Text>
+          </Pressable>
 
-        <Text style={styles.icon}>🤖</Text>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarYazi}>✦</Text>
+          </View>
 
-        <Text style={styles.title}>Yapay Zekâya Sor</Text>
+          <View style={styles.headerBilgi}>
+            <Text style={styles.headerBaslik}>
+              Sağlık Asistanı
+            </Text>
 
-        <Text style={styles.description}>
-          Hasta eğitimi içerikleri hakkında
-          merak ettiklerinizi yazabilirsiniz.
-        </Text>
+            <View style={styles.durumSatiri}>
+              <View style={styles.durumNokta} />
+              <Text style={styles.durumYazi}>
+                Yapay zekâ aktif
+              </Text>
+            </View>
+          </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Sorunuzu buraya yazın..."
-          placeholderTextColor="#8A97A8"
-          multiline
-          value={soru}
-          onChangeText={setSoru}
-          textAlignVertical="top"
-        />
+          <View style={styles.aiEtiket}>
+            <Text style={styles.aiEtiketYazi}>AI</Text>
+          </View>
+        </View>
 
-        <Pressable style={styles.button} onPress={soruGonder}>
-          <Text style={styles.buttonText}>Soruyu Gönder</Text>
-        </Pressable>
+        <ScrollView
+          ref={scrollRef}
+          style={styles.sohbet}
+          contentContainerStyle={styles.sohbetIcerik}
+          keyboardShouldPersistTaps="handled"
+        >
+          {!sohbetBasladi && (
+            <View style={styles.karsilama}>
+              <View style={styles.buyukAvatar}>
+                <Text style={styles.buyukAvatarYazi}>
+                  ✨
+                </Text>
+              </View>
 
-        <Text style={styles.notice}>
-          Bu uygulama tanı veya tedavi önermez.
-        </Text>
+              <Text style={styles.karsilamaBaslik}>
+                Merhaba! 👋
+              </Text>
+
+              <Text style={styles.karsilamaAciklama}>
+                Sağlık hakkında merak ettiklerini sor.
+                Genel sağlık bilgilerini keşfetmene
+                yardımcı olalım.
+              </Text>
+            </View>
+          )}
+
+          {mesajlar.map((mesaj) => {
+            const kullanici = mesaj.rol === "kullanici";
+
+            return (
+              <View
+                key={mesaj.id}
+                style={[
+                  styles.mesajSatiri,
+                  kullanici && styles.kullaniciSatiri,
+                ]}
+              >
+                {!kullanici && (
+                  <View style={styles.kucukAvatar}>
+                    <Text style={styles.kucukAvatarYazi}>
+                      ✦
+                    </Text>
+                  </View>
+                )}
+
+                <View
+                  style={[
+                    styles.mesajKutusu,
+                    kullanici
+                      ? styles.kullaniciMesaji
+                      : styles.asistanMesaji,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.mesajMetni,
+                      kullanici && styles.kullaniciMetni,
+                    ]}
+                  >
+                    {mesaj.metin}
+                  </Text>
+
+                  <Text
+                    style={[
+                      styles.saat,
+                      kullanici && styles.kullaniciSaat,
+                    ]}
+                  >
+                    {mesaj.saat}
+                  </Text>
+                </View>
+              </View>
+            );
+          })}
+
+          {!sohbetBasladi && (
+            <View style={styles.oneriAlani}>
+              <Text style={styles.oneriBaslik}>
+                ✨ Ne hakkında konuşalım?
+              </Text>
+
+              <View style={styles.oneriGrid}>
+                {ONERILER.map((oneri) => (
+                  <Pressable
+                    key={oneri.baslik}
+                    style={styles.oneriKart}
+                    onPress={() =>
+                      mesajGonder(oneri.soru)
+                    }
+                  >
+                    <Text style={styles.oneriEmoji}>
+                      {oneri.emoji}
+                    </Text>
+
+                    <Text style={styles.oneriKartBaslik}>
+                      {oneri.baslik}
+                    </Text>
+
+                    <Text style={styles.oneriSoru}>
+                      {oneri.soru}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {yukleniyor && (
+            <View style={styles.yukleniyor}>
+              <ActivityIndicator color="#087E80" />
+              <Text style={styles.yukleniyorYazi}>
+                Yapay zekâ yanıt hazırlıyor...
+              </Text>
+            </View>
+          )}
+        </ScrollView>
+
+        <View style={styles.altAlan}>
+          <Text style={styles.uyari}>
+            Bu uygulama tanı veya tedavi önermez.
+            Acil durumlarda 112'yi arayın.
+          </Text>
+
+          <View style={styles.girdiSatiri}>
+            <TextInput
+              style={styles.input}
+              placeholder="Sağlık hakkında bir şey sor..."
+              placeholderTextColor="#94A3B8"
+              value={girdi}
+              onChangeText={setGirdi}
+              multiline
+              maxLength={2000}
+            />
+
+            <Pressable
+              style={[
+                styles.gonderButon,
+                (!girdi.trim() || yukleniyor) &&
+                  styles.pasifButon,
+              ]}
+              disabled={!girdi.trim() || yukleniyor}
+              onPress={() => mesajGonder()}
+            >
+              <Text style={styles.gonderYazi}>➤</Text>
+            </Pressable>
+          </View>
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safe: {
     flex: 1,
-    backgroundColor: "#F5F8FC",
+    backgroundColor: "#F5F8FA",
   },
-  content: {
+  ana: {
     flex: 1,
-    padding: 24,
   },
-  back: {
-    color: "#147D83",
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E8EEF2",
+  },
+  geriButon: {
+    width: 36,
+    alignItems: "center",
+  },
+  geriYazi: {
+    fontSize: 34,
+    color: "#123047",
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 16,
+    backgroundColor: "#087E80",
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 8,
+  },
+  avatarYazi: {
+    color: "#FFFFFF",
+    fontSize: 25,
+  },
+  headerBilgi: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  headerBaslik: {
+    color: "#123047",
+    fontSize: 17,
+    fontWeight: "900",
+  },
+  durumSatiri: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
+  },
+  durumNokta: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: "#10B981",
+    marginRight: 6,
+  },
+  durumYazi: {
+    color: "#64748B",
+    fontSize: 12,
+  },
+  aiEtiket: {
+    backgroundColor: "#E6F5F3",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+  aiEtiketYazi: {
+    color: "#087E80",
+    fontWeight: "900",
+  },
+  sohbet: {
+    flex: 1,
+  },
+  sohbetIcerik: {
+    padding: 16,
+    paddingBottom: 30,
+  },
+  karsilama: {
+    alignItems: "center",
+    marginTop: 20,
+    marginBottom: 22,
+  },
+  buyukAvatar: {
+    width: 76,
+    height: 76,
+    borderRadius: 26,
+    backgroundColor: "#E0F3F1",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  buyukAvatarYazi: {
+    fontSize: 34,
+  },
+  karsilamaBaslik: {
+    fontSize: 27,
+    fontWeight: "900",
+    color: "#123047",
+  },
+  karsilamaAciklama: {
+    textAlign: "center",
+    color: "#64748B",
+    fontSize: 14,
+    lineHeight: 22,
+    marginTop: 10,
+    paddingHorizontal: 15,
+  },
+  mesajSatiri: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    marginBottom: 16,
+  },
+  kullaniciSatiri: {
+    justifyContent: "flex-end",
+  },
+  kucukAvatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 12,
+    backgroundColor: "#087E80",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 8,
+  },
+  kucukAvatarYazi: {
+    color: "#FFFFFF",
+    fontSize: 18,
+  },
+  mesajKutusu: {
+    maxWidth: "82%",
+    padding: 15,
+    borderRadius: 18,
+  },
+  asistanMesaji: {
+    backgroundColor: "#FFFFFF",
+    borderBottomLeftRadius: 5,
+    borderWidth: 1,
+    borderColor: "#EDF1F4",
+  },
+  kullaniciMesaji: {
+    backgroundColor: "#087E80",
+    borderBottomRightRadius: 5,
+  },
+  mesajMetni: {
+    color: "#334155",
+    fontSize: 14,
+    lineHeight: 22,
+  },
+  kullaniciMetni: {
+    color: "#FFFFFF",
+  },
+  saat: {
+    fontSize: 10,
+    color: "#94A3B8",
+    textAlign: "right",
+    marginTop: 8,
+  },
+  kullaniciSaat: {
+    color: "#D3F0ED",
+  },
+  oneriAlani: {
+    marginTop: 10,
+  },
+  oneriBaslik: {
     fontSize: 16,
-    fontWeight: "700",
-    marginBottom: 35,
-  },
-  icon: {
-    fontSize: 46,
-    marginBottom: 15,
-  },
-  title: {
-    fontSize: 30,
-    fontWeight: "800",
-    color: "#172B4D",
+    fontWeight: "900",
+    color: "#123047",
     marginBottom: 14,
   },
-  description: {
-    fontSize: 16,
-    color: "#65758B",
-    lineHeight: 25,
-    marginBottom: 25,
+  oneriGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+  },
+  oneriKart: {
+    width: "48%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    padding: 15,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#E8EEF2",
+    minHeight: 145,
+  },
+  oneriEmoji: {
+    fontSize: 26,
+    marginBottom: 10,
+  },
+  oneriKartBaslik: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: "#123047",
+    marginBottom: 6,
+  },
+  oneriSoru: {
+    color: "#64748B",
+    fontSize: 11,
+    lineHeight: 17,
+  },
+  yukleniyor: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 14,
+  },
+  yukleniyorYazi: {
+    color: "#64748B",
+    marginLeft: 10,
+  },
+  altAlan: {
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: 1,
+    borderTopColor: "#E8EEF2",
+    paddingHorizontal: 15,
+    paddingTop: 10,
+    paddingBottom: 12,
+  },
+  uyari: {
+    fontSize: 10,
+    color: "#94A3B8",
+    textAlign: "center",
+    marginBottom: 10,
+    lineHeight: 15,
+  },
+  girdiSatiri: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    backgroundColor: "#F5F8FA",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 20,
+    padding: 6,
   },
   input: {
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#DCE5EE",
-    borderRadius: 16,
-    padding: 16,
-    minHeight: 140,
-    fontSize: 15,
-    color: "#172B4D",
+    flex: 1,
+    minHeight: 42,
+    maxHeight: 120,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: "#123047",
   },
-  button: {
-    backgroundColor: "#147D83",
-    borderRadius: 14,
-    padding: 17,
+  gonderButon: {
+    width: 43,
+    height: 43,
+    borderRadius: 15,
+    backgroundColor: "#087E80",
     alignItems: "center",
-    marginTop: 16,
+    justifyContent: "center",
   },
-  buttonText: {
+  pasifButon: {
+    opacity: 0.45,
+  },
+  gonderYazi: {
     color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "800",
-  },
-  notice: {
-    marginTop: 25,
-    color: "#176B70",
-    fontSize: 13,
-    lineHeight: 20,
+    fontSize: 23,
+    fontWeight: "900",
   },
 });

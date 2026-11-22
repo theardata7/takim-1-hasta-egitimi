@@ -1,0 +1,92 @@
+[
+  {
+    "id": "2705384",
+    "ad": "Süt, NFS",
+    "kalori": 52,
+    "protein": 3.3,
+    "karbonhidrat": 4.8,
+    "yag": 2.1,
+    "orijinalAd": "Milk, NFS"
+  },
+  {
+    "id": "2705385",
+    "ad": "Süt, bütün",
+    "kalori": 61,
+    "protein": 3.3,
+    "karbonhidrat": 4.6,
+    "yag": 3.2,
+    "orijinalAd": "Milk, whole"
+  },
+  {
+    "id": "2705386",
+    "ad": "Süt, yağı azaltılmış (%2)",
+    "kalori": 50,
+    "protein": 3.4,
+    "karbonhidrat": 4.9,
+    "yag": 1.9,
+    "orijinalAd": "Milk, reduced fat (2%)"
+  },
+  {
+    "id": "2705387",
+    "ad": "Süt, az yağlı (%1)",
+    "kalori": 43,
+    "protein": 3.4,
+    "karbonhidrat": 5.2,
+    "yag": 1,
+    "orijinalAd": "Milk, low fat (1%)"
+  },
+  {
+    "id": "2705388",
+    "ad": "Süt, yağsız (yağsız)",
+    "kalori": 34,
+    "protein": 3.4,
+    "karbonhidrat": 4.9,
+    "yag": 0.1,
+    "orijinalAd": "Milk, fat free (skim)"
+  },
+  {
+    "id": "2705389",
+    "ad": "Süt, laktozsuz, az yağlı (%1)",
+    "kalori": 43,
+    "protein": 3.4,
+    "karbonhidrat": 5.2,
+    "yag": 1,
+    "orijinalAd": "Milk, lactose free, low fat (1%)"
+  },
+  {
+    "id": "2705390",
+    "ad": "Süt, laktozsuz, yağsız (yağsız)",
+    "kalori": 34,
+    "protein": 3.4,
+    "karbonhidrat": 4.9,
+    "yag": 0.1,
+    "orijinalAd": "Milk, lactose free, fat free (skim)"
+  },
+  {
+    "id": "2705391",
+    "ad": "Süt, laktozsuz, yağı azaltılmış (%2)",
+    "kalori": 50,
+    "protein": 3.4,
+    "karbonhidrat": 4.9,
+    "yag": 1.9,
+    "orijinalAd": "Milk, lactose free, reduced fat (2%)"
+  },
+  {
+    "id": "2705392",
+    "ad": "Süt, laktozsuz, bütün",
+    "kalori": 61,
+    "protein": 3.3,
+    "karbonhidrat": 4.6,
+    "yag": 3.2,
+    "orijinalAd": "Milk, lactose free, whole"
+  },
+  {
+    "id": "2705393",
+    "ad": "Ayran",
+    "kalori": 43,
+    "protein": 3.5,
+    "karbonhidrat": 4.8,
+    "yag": 1.1,
+    "orijinalAd": "Buttermilk"
+  }
+]

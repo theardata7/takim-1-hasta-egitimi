@@ -33,6 +33,13 @@ const ozellikler = [
     renk: "#FFF1E6",
     yol: "/sor" as const,
   },
+  {
+  baslik: "Su Takibi",
+  aciklama: "Günlük su tüketimini kaydet ve takip et.",
+  ikon: "💧",
+  renk: "#E4F6F2",
+  yol: "/su-takibi" as const,
+},
 ];
 
 export default function AnaSayfa() {

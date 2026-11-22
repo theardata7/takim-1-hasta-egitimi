@@ -41,3 +41,5 @@ example
 # generated native folders
 /ios
 /android
+/sunucu/.env
+/sunucu/node_modules/

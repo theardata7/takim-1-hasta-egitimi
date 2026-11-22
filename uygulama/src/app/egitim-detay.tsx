@@ -108,6 +108,30 @@ export default function EgitimDetayEkrani() {
     </Text>
   </Pressable>
 )}
+{id === "saglikli-beslenme" && (
+  <Pressable
+    onPress={() => router.push("/beslenme")}
+    style={{
+      backgroundColor: "#FFFFFF",
+      borderWidth: 2,
+      borderColor: "#087E80",
+      padding: 20,
+      borderRadius: 18,
+      marginTop: 12,
+      alignItems: "center",
+    }}
+  >
+    <Text
+      style={{
+        color: "#087E80",
+        fontSize: 16,
+        fontWeight: "800",
+      }}
+    >
+      🥗 Beslenme Günlüğüm →
+    </Text>
+  </Pressable>
+)}
         <View style={styles.notice}>
           <Text style={styles.noticeText}>
             Bu uygulama tanı veya tedavi önermez.

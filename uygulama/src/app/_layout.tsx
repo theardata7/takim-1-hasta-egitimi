@@ -15,6 +15,7 @@ export default function RootLayout() {
       <Stack.Screen name="egitim-detay" />
       <Stack.Screen name="ilaclarim" />
       <Stack.Screen name="sor" />
+      <Stack.Screen name="su-takibi" />
     </Stack>
   );
 }
