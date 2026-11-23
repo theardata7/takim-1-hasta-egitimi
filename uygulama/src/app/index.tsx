@@ -13,6 +13,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const ozellikler = [
   {
+  baslik: "Tansiyon Günlüğü",
+  aciklama: "Tansiyon ve nabız ölçümlerini kaydet.",
+  ikon: "❤️",
+  renk: "#FFE4E6",
+  yol: "/tansiyon" as const,
+},
+  {
     baslik: "Hasta Eğitimi",
     aciklama: "Sağlıklı yaşam hakkında bilgi edin.",
     ikon: "📚",

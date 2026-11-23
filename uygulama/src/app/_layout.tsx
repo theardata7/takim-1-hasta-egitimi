@@ -16,6 +16,7 @@ export default function RootLayout() {
       <Stack.Screen name="ilaclarim" />
       <Stack.Screen name="sor" />
       <Stack.Screen name="su-takibi" />
+      <Stack.Screen name="tansiyon" />
     </Stack>
   );
 }
